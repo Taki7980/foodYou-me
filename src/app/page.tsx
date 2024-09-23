@@ -1,101 +1,135 @@
-import Image from "next/image";
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+'use client'
+
+import { useState, useEffect, useCallback } from 'react';
+import ProductSearch from '@/components/shared/ProductSearch';
+import BarcodeSearch from '@/components/shared/BarcodeSearch';
+import CategorySelect from '@/components/shared/CategorySelect';
+import SortSelect from '@/components/shared/SortSelect';
+import ProductList from '@/components/shared/ProductList';
+import { Button } from "@/components/ui/button";
+interface Product {
+  id: string;
+  product_name: string;
+  brands: string;
+  image_url: string;
+  code: string;
+  categories: string[];
+  packaging: string[];
+  ingredients_text: string;
+  nutriscore_grade: string;
+  countries_tags: string[];
+  stores_tags: string[];
+  quantity: string;
+  nutrition_facts: {
+    energy: string;
+    fat: string;
+    carbohydrates: string;
+    sugars: string;
+    proteins: string;
+    salt: string;
+  };
+}
+
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [products, setProducts] = useState<Product[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [barcode, setBarcode] = useState('');
+  const [category, setCategory] = useState('');
+  const [sortBy, setSortBy] = useState('');
+  const [page, setPage] = useState(1);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      
+      try {
+        const response = await fetch('https://world.openfoodfacts.org/categories.json');
+        const data = await response.json();
+        setCategories(data.tags.map((tag: any) => tag.name));
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      }
+    };
+    
+    fetchCategories();
+  }, []);
+
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    try {
+      const response = await fetch(`https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(searchTerm)}&json=true`);
+      const data = await response.json();
+      setProducts(data.products);
+    } catch (error) {
+      console.error('Error searching products:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleBarcodeSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    try {
+      const response = await fetch(`https://world.openfoodfacts.org/api/v0/product/${barcode}.json`);
+      const data = await response.json();
+      if (data.status === 1) {
+        setProducts([data.product]);
+      } else {
+        setProducts([]);
+      }
+    } catch (error) {
+      console.error('Error searching by barcode:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loadMore = () => {
+    setPage(prevPage => prevPage + 1);
+  };
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-4xl font-bold mb-8">Food Facts</h1>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+        <ProductSearch 
+          searchTerm={searchTerm} 
+          setSearchTerm={setSearchTerm} 
+          onSearch={handleSearch} 
+          isLoading={isLoading} 
+        />
+        <BarcodeSearch 
+          barcode={barcode} 
+          setBarcode={setBarcode} 
+          onSearch={handleBarcodeSearch} 
+          isLoading={isLoading} 
+        />
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+        <CategorySelect categories={categories} setCategory={setCategory} />
+        <SortSelect setSortBy={setSortBy} />
+      </div>
+      
+      <ProductList products={products} />
+      
+      {products.length > 0 && (
+        <div className="mt-8 text-center">
+          <Button onClick={loadMore} disabled={isLoading}>
+            {isLoading ? 'Loading...' : 'Load More'}
+          </Button>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      )}
     </div>
   );
 }
