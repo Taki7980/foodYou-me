@@ -3,7 +3,10 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Image from 'next/image'
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
+import { motion } from "framer-motion"
 
 interface Product {
   product_name: string
@@ -34,41 +37,89 @@ export default function ProductDetail() {
   }, [id])
 
   if (!product) {
-    return <div>Loading...</div>
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <Card>
+          <CardContent className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <Skeleton className="h-[400px] w-full rounded-lg" />
+              <div className="space-y-4">
+                <Skeleton className="h-8 w-3/4" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-2/3" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   return (
     <div className="container mx-auto px-4 py-8">
       <Card>
-        <CardHeader>
-          <CardTitle>{product.product_name}</CardTitle>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className='h-full w-full flex items-center justify-center'>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="h-full w-full flex items-center justify-center"
+            >
               <Image
                 src={product.image_url || '/placeholder.svg'}
                 alt={product.product_name}
                 width={400}
                 height={400}
-                className="w-fit h-fit object-cover rounded-lg"
+                className="w-fit h-fit object-cover rounded-lg shadow-lg"
               />
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold mb-4">Ingredients</h2>
-              <p>{product.ingredients_text || 'Not available'}</p>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
+              <h1 className="text-3xl font-bold mb-4">{product.product_name}</h1>
               
-              <h2 className="text-2xl font-bold mt-8 mb-4">Nutritional Values (per 100g)</h2>
-              <ul>
-                <li>Energy: {product.nutriments.energy_100g || 'N/A'} kcal</li>
-                <li>Fat: {product.nutriments.fat_100g || 'N/A'} g</li>
-                <li>Carbohydrates: {product.nutriments.carbohydrates_100g || 'N/A'} g</li>
-                <li>Proteins: {product.nutriments.proteins_100g || 'N/A'} g</li>
-              </ul>
+              <h2 className="text-xl font-semibold mt-6 mb-2">Ingredients</h2>
+              <p className="text-muted-foreground">{product.ingredients_text || 'Not available'}</p>
               
-              <h2 className="text-2xl font-bold mt-8 mb-4">Labels</h2>
-              <p>{product.labels || 'Not available'}</p>
-            </div>
+              <h2 className="text-xl font-semibold mt-6 mb-2">Nutritional Values (per 100g)</h2>
+              <div className="grid grid-cols-2 gap-4">
+                {['energy', 'fat', 'carbohydrates', 'proteins'].map((nutrient) => (
+                  <motion.div
+                    key={nutrient}
+                    className="bg-muted p-4 rounded-lg"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <p className="text-sm font-medium">{nutrient.charAt(0).toUpperCase() + nutrient.slice(1)}</p>
+                    <p className="text-2xl font-bold">
+                      {product.nutriments[`${nutrient}_100g` as keyof typeof product.nutriments] || 'N/A'}
+                      {nutrient === 'energy' ? ' kcal' : ' g'}
+                    </p>
+                  </motion.div>
+                ))}
+              </div>
+              
+              <h2 className="text-xl font-semibold mt-6 mb-2">Labels</h2>
+              <div className="flex flex-wrap gap-2">
+                {product.labels ? 
+                  product.labels.split(',').map((label, index) => (
+                    <motion.div
+                      key={index}
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.3, delay: index * 0.1 }}
+                    >
+                      <Badge variant="secondary">{label.trim()}</Badge>
+                    </motion.div>
+                  )) : 
+                  <p className="text-muted-foreground">Not available</p>
+                }
+              </div>
+            </motion.div>
           </div>
         </CardContent>
       </Card>
