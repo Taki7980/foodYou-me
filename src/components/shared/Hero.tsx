@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Search, X } from "lucide-react";
 import Image from "next/image";
 import BarcodeSearch from "./BarcodeSearch";
-import { useBarCodeStore } from "@/store/BarCodeStore";
+
 
 interface ProductSearchProps {
 	searchTerm: string;
@@ -23,21 +23,6 @@ export default function Hero({
 	isLoading,
 }: ProductSearchProps) {
 	const [isFocused, setIsFocused] = useState(false);
-	const [barcode, setBarcode] = useState("");
-
-	const { fetchBarcodeItems } = useBarCodeStore();
-
-	const handleBarcodeSearch = async (e: React.FormEvent) => {
-		e.preventDefault();
-		setIsFocused(true);
-		try {
-			await fetchBarcodeItems(barcode);
-		} catch (error) {
-			console.error("Error fetching barcode item:", error);
-		} finally {
-			setIsFocused(false);
-		}
-	};
 
 	return (
 		<div className="relative min-h-screen flex items-center justify-center overflow-hidden">
@@ -170,14 +155,7 @@ export default function Hero({
 					animate={{ opacity: 1, y: 0 }}
 					transition={{ duration: 0.5, delay: 1 }}
 				>
-					
-						<BarcodeSearch
-							barcode={barcode}
-							setBarcode={setBarcode}
-							onSearch={handleBarcodeSearch}
-							isLoading={isLoading}
-						/>
-					
+					<BarcodeSearch />
 				</motion.div>
 			</div>
 		</div>

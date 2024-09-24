@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
+import BarcodeProductList from "@/components/shared/BarcodeProductList";
 import CategorySelect from "@/components/shared/CategorySelect";
 import Hero from "@/components/shared/Hero";
 import ProductList from "@/components/shared/ProductList";
@@ -14,7 +15,7 @@ import { useEffect, useState } from "react";
 export default function Home() {
 	// State from product store and barcode store
 	const { products, fetchProducts, setProducts } = useProductStore();
-	const { bardcodeItem, fetchBarcodeItems } = useBarCodeStore();
+	const { barcodeItem, fetchBarcodeItems } = useBarCodeStore();
 
 	// UI and local state
 	const [searchTerm, setSearchTerm] = useState("");
@@ -57,6 +58,7 @@ export default function Home() {
 
 	// Load more products (pagination)
 	const loadMore = () => setPage((prevPage) => prevPage + 1);
+	console.log(barcodeItem);
 
 	return (
 		<div className="container mx-auto px-4 py-8 flex flex-col gap-10">
@@ -78,7 +80,14 @@ export default function Home() {
 			</div>
 
 			{/* Product listing */}
-			<ProductList products={products} />
+			{barcodeItem && (
+				<BarcodeProductList product={barcodeItem} />
+			)
+			}
+			{products.length > 0 && (
+				<ProductList products={products} />
+			)}
+			{products?<ProductList products={products} />:<BarcodeProductList product={barcodeItem} />}
 
 			{/* Load more button */}
 			{products.length > 0 && (
